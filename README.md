@@ -1,5 +1,12 @@
 # music2lyrics
 
+![Platform](https://img.shields.io/badge/platform-macOS_Apple_Silicon-black?logo=apple)
+![Python](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)
+![MLX](https://img.shields.io/badge/MLX-Whisper_large--v3-FF6F00?logo=apple)
+![Demucs](https://img.shields.io/badge/demucs-vocal_separation-blue?logo=meta)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Offline](https://img.shields.io/badge/runs-100%25_offline-brightgreen)
+
 Local music-to-lyrics transcription pipeline for Apple Silicon. Extracts vocals with **demucs** and transcribes them with **mlx-whisper** — fully offline, no GPU/CUDA required.
 
 ```mermaid

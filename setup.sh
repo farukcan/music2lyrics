@@ -26,7 +26,7 @@ fi
 source venv/bin/activate
 echo "Installing Python packages..."
 pip install --upgrade pip
-pip install mlx-whisper demucs
+pip install mlx-whisper demucs torchcodec
 
 # Create directories
 mkdir -p raw output separated

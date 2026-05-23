@@ -5,3 +5,6 @@ __pycache__/
 *.pyc
 .DS_Store
 raw/
+app/src-tauri/target/
+app/node_modules/
+app/dist/

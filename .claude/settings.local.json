@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo --version)",
+      "Bash(npm --version)",
+      "Bash(pnpm --version)",
+      "Bash(cargo install:*)",
+      "Bash(npm list:*)",
+      "Bash(cargo check:*)",
+      "Bash(pnpm tauri:*)"
+    ]
+  }
+}

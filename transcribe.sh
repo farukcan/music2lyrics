@@ -4,6 +4,13 @@
 
 set -e
 
+# Ensure Homebrew tools (ffmpeg etc.) are in PATH when launched from macOS .app
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+
 if [ -z "$1" ]; then
     echo "Usage: ./transcribe.sh <audio-file> [language]"
     echo "Example: ./transcribe.sh raw/song.mp3 tr"

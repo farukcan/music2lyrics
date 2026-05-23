@@ -12,7 +12,7 @@ type Action =
   | { type: "ADD_TO_QUEUE"; items: QueueItem[] }
   | { type: "REMOVE_FROM_QUEUE"; id: string }
   | { type: "START_JOB"; id: string }
-  | { type: "JOB_COMPLETE"; jobId: string }
+  | { type: "JOB_COMPLETE"; jobId: string; songName: string }
   | { type: "JOB_ERROR"; jobId: string; error: string }
   | { type: "ADD_LOG_LINE"; log: LogLine }
   | { type: "CLEAR_LOGS" }
@@ -22,13 +22,16 @@ type Action =
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "ADD_TO_QUEUE": {
-      const activeItems = state.queue.filter(
+      const keepItems = state.queue.filter(
+        (item) => item.status === "pending" || item.status === "processing" || item.status === "error"
+      );
+      const hasActive = keepItems.some(
         (item) => item.status === "pending" || item.status === "processing"
       );
       return {
         ...state,
-        queue: [...activeItems, ...action.items],
-        logs: activeItems.length === 0 ? [] : state.logs,
+        queue: [...keepItems, ...action.items],
+        logs: hasActive ? state.logs : [],
       };
     }
     case "REMOVE_FROM_QUEUE":
@@ -46,7 +49,7 @@ function reducer(state: AppState, action: Action): AppState {
       };
     case "JOB_COMPLETE": {
       const newQueue = state.queue.map((item) =>
-        item.id === action.jobId ? { ...item, status: "complete" as const } : item
+        item.id === action.jobId ? { ...item, status: "complete" as const, songName: action.songName } : item
       );
       const stillActive = newQueue.some(
         (item) => item.status === "pending" || item.status === "processing"

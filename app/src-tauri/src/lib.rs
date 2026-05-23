@@ -1,5 +1,6 @@
 use serde::Serialize;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -71,9 +72,14 @@ async fn run_script_with_streaming(
     project_root: &Path,
     command_str: &str,
     job_id: &str,
+    use_venv: bool,
 ) -> Result<(), String> {
-    let activate_path = project_root.join("venv/bin/activate");
-    let full_command = format!("source '{}' && {}", activate_path.display(), command_str);
+    let full_command = if use_venv {
+        let activate_path = project_root.join("venv/bin/activate");
+        format!("source '{}' && {}", activate_path.display(), command_str)
+    } else {
+        command_str.to_string()
+    };
 
     let mut child = Command::new("bash")
         .arg("-c")
@@ -106,10 +112,19 @@ async fn run_script_with_streaming(
 
     let app_stderr = app.clone();
     let job_id_stderr = job_id.to_string();
+    let stderr_tail: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+    let stderr_tail_writer = stderr_tail.clone();
     let stderr_handle = tokio::spawn(async move {
         let reader = BufReader::new(stderr);
         let mut lines = reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
+            {
+                let mut tail = stderr_tail_writer.lock().unwrap();
+                tail.push(line.clone());
+                if tail.len() > 20 {
+                    tail.remove(0);
+                }
+            }
             let _ = app_stderr.emit(
                 "log-line",
                 LogLinePayload {
@@ -130,9 +145,12 @@ async fn run_script_with_streaming(
         .map_err(|e| format!("Failed to wait for process: {}", e))?;
 
     if !status.success() {
+        let tail = stderr_tail.lock().unwrap();
+        let detail = tail.join("\n");
         return Err(format!(
-            "Process exited with code: {}",
-            status.code().unwrap_or(-1)
+            "Process exited with code: {}\n{}",
+            status.code().unwrap_or(-1),
+            detail
         ));
     }
 
@@ -187,7 +205,11 @@ async fn transcribe(
         if link.symlink_metadata().is_ok() {
             let _ = std::fs::remove_file(&link);
         }
+        #[cfg(unix)]
         std::os::unix::fs::symlink(&abs_path, &link)
+            .map_err(|e| format!("Failed to create symlink: {}", e))?;
+        #[cfg(windows)]
+        std::os::windows::fs::symlink_file(&abs_path, &link)
             .map_err(|e| format!("Failed to create symlink: {}", e))?;
         symlink_path = Some(link.clone());
         link
@@ -202,7 +224,7 @@ async fn transcribe(
         language
     );
 
-    let result = run_script_with_streaming(&app, &project_root, &command_str, &job_id).await;
+    let result = run_script_with_streaming(&app, &project_root, &command_str, &job_id, true).await;
 
     // Clean up symlink
     if let Some(link) = &symlink_path {
@@ -221,6 +243,16 @@ async fn transcribe(
             Ok(())
         }
         Err(e) => {
+            // Clean up partial output directory left by failed transcribe.sh
+            let output_dir = project_root.join("output").join(&song_name);
+            if output_dir.exists() {
+                let _ = std::fs::remove_dir_all(&output_dir);
+            }
+            let separated_dir = project_root.join("separated/htdemucs").join(&song_name);
+            if separated_dir.exists() {
+                let _ = std::fs::remove_dir_all(&separated_dir);
+            }
+
             let _ = app.emit(
                 "job-error",
                 JobErrorPayload {
@@ -228,7 +260,8 @@ async fn transcribe(
                     error: e.clone(),
                 },
             );
-            Err(e)
+            // Return Ok to avoid duplicate error handling — error is already sent via event
+            Ok(())
         }
     }
 }
@@ -267,13 +300,23 @@ async fn list_output_songs(app: AppHandle) -> Result<Vec<SongOutput>, String> {
                 .join(&name)
                 .join("vocals.wav");
 
+            // Find original audio in raw/ directory
+            let raw_dir = project_root.join("raw");
+            let audio_extensions = ["mp3", "wav", "m4a", "flac", "ogg", "wma"];
+            let audio_path = audio_extensions
+                .iter()
+                .map(|ext| raw_dir.join(format!("{}.{}", name, ext)))
+                .find(|p| p.exists())
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+
             songs.push(SongOutput {
                 has_lrc: dir.join(format!("{}.lrc", name)).exists(),
                 has_srt: dir.join("vocals.srt").exists(),
                 has_txt: dir.join("vocals.txt").exists(),
                 has_vtt: dir.join("vocals.vtt").exists(),
                 has_json: dir.join("vocals.json").exists(),
-                audio_path: String::new(),
+                audio_path,
                 vocals_path: vocals_path.to_string_lossy().to_string(),
                 name,
             });
@@ -328,7 +371,7 @@ async fn check_setup(app: AppHandle) -> Result<SetupStatus, String> {
 async fn run_setup(app: AppHandle, job_id: String) -> Result<(), String> {
     let project_root = get_project_root(&app)?;
     let command_str = format!("'{}'", project_root.join("setup.sh").display());
-    run_script_with_streaming(&app, &project_root, &command_str, &job_id).await
+    run_script_with_streaming(&app, &project_root, &command_str, &job_id, false).await
 }
 
 #[tauri::command]

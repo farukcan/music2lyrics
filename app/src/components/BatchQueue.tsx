@@ -26,28 +26,27 @@ export function BatchQueue() {
       <h3 className="text-sm font-medium text-zinc-400 mb-2">Queue</h3>
       <div className="space-y-1">
         {state.queue.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-zinc-800/50"
-          >
-            <span className={STATUS_COLORS[item.status]}>
-              {STATUS_ICONS[item.status]}
-            </span>
-            <span className="flex-1 truncate text-zinc-300">
-              {item.fileName}
-            </span>
-            {item.status === "pending" && (
-              <button
-                onClick={() => removeFromQueue(item.id)}
-                className="text-zinc-500 hover:text-red-400 text-xs"
-              >
-                ✕
-              </button>
-            )}
-            {item.status === "error" && (
-              <span className="text-red-400 text-xs truncate max-w-32">
-                {item.error}
+          <div key={item.id}>
+            <div className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-zinc-800/50">
+              <span className={STATUS_COLORS[item.status]}>
+                {STATUS_ICONS[item.status]}
               </span>
+              <span className="flex-1 truncate text-zinc-300">
+                {item.fileName}
+              </span>
+              {item.status === "pending" && (
+                <button
+                  onClick={() => removeFromQueue(item.id)}
+                  className="text-zinc-500 hover:text-red-400 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {item.status === "error" && item.error && (
+              <pre className="text-red-400 text-xs mt-1 mx-2 p-2 rounded bg-red-950/30 whitespace-pre-wrap max-h-40 overflow-y-auto">
+                {item.error}
+              </pre>
             )}
           </div>
         ))}

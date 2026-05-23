@@ -4,6 +4,13 @@
 
 set -e
 
+# Ensure Homebrew is in PATH when launched from macOS .app
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+
 echo "=== music2lyrics setup ==="
 
 # Check Homebrew
@@ -27,6 +34,16 @@ source venv/bin/activate
 echo "Installing Python packages..."
 pip install --upgrade pip
 pip install mlx-whisper demucs torchcodec
+
+# Patch demucs for PyTorch 2.x compatibility (in-place tensor ops)
+DEMUCS_SEP="venv/lib/python3.11/site-packages/demucs/separate.py"
+if [ -f "$DEMUCS_SEP" ]; then
+    echo "Patching demucs for PyTorch 2.x compatibility..."
+    sed -i '' 's/wav -= ref\.mean()/wav = wav - ref.mean()/' "$DEMUCS_SEP"
+    sed -i '' 's/wav \/= ref\.std()/wav = wav \/ ref.std()/' "$DEMUCS_SEP"
+    sed -i '' 's/sources \*= ref\.std()/sources = sources * ref.std()/' "$DEMUCS_SEP"
+    sed -i '' 's/sources += ref\.mean()/sources = sources + ref.mean()/' "$DEMUCS_SEP"
+fi
 
 # Create directories
 mkdir -p raw output separated

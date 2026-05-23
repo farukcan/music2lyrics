@@ -19,8 +19,15 @@ export function LrcPlayer() {
   const [useVocals, setUseVocals] = useState(true);
   const activeLineRef = useRef<HTMLDivElement>(null);
 
-  const { audioRef, isPlaying, currentTime, duration, currentLineIndex, seek, toggle } =
-    useLrcPlayer(lines);
+  const audioPath = songData
+    ? useVocals
+      ? songData.vocals_path
+      : songData.audio_path
+    : "";
+  const audioSrc = audioPath ? convertFileSrc(audioPath) : "";
+
+  const { audioRef, isPlaying, currentTime, duration, currentLineIndex, seek, toggle, requestSeekOnLoad } =
+    useLrcPlayer(lines, audioSrc);
 
   // Load LRC content when song changes
   useEffect(() => {
@@ -53,21 +60,16 @@ export function LrcPlayer() {
 
   if (!state.selectedSong) return null;
 
-  const audioPath = songData
-    ? useVocals
-      ? songData.vocals_path
-      : songData.audio_path
-    : "";
-
-  const audioSrc = audioPath ? convertFileSrc(audioPath) : "";
-
   return (
     <div className="border-t border-zinc-700">
       <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-700/50">
         <h3 className="text-sm font-medium text-zinc-400">LRC Player</h3>
-        {songData?.vocals_path && (
+        {songData?.vocals_path && songData?.audio_path && (
           <button
-            onClick={() => setUseVocals(!useVocals)}
+            onClick={() => {
+              requestSeekOnLoad(currentTime);
+              setUseVocals(!useVocals);
+            }}
             className="text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-400 hover:text-zinc-200"
           >
             {useVocals ? "Vocals" : "Original"}

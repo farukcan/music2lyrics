@@ -7,6 +7,9 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Offline](https://img.shields.io/badge/runs-100%25_offline-brightgreen)
 
+<img width="1200" height="801" alt="image" src="https://github.com/user-attachments/assets/cbf9b68d-fc1b-44d6-b877-2453db122e94" />
+
+
 Local music-to-lyrics transcription pipeline for Apple Silicon. Extracts vocals with **demucs** and transcribes them with **mlx-whisper** — fully offline, no GPU/CUDA required.
 
 ```mermaid

@@ -4,6 +4,9 @@
 ![Python](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)
 ![MLX](https://img.shields.io/badge/MLX-Whisper_large--v3-FF6F00?logo=apple)
 ![Demucs](https://img.shields.io/badge/demucs-vocal_separation-blue?logo=meta)
+![Tauri](https://img.shields.io/badge/Tauri-v2-FFC131?logo=tauri&logoColor=white)
+![Rust](https://img.shields.io/badge/Rust-backend-DEA584?logo=rust&logoColor=white)
+![React](https://img.shields.io/badge/React-TypeScript-61DAFB?logo=react&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Offline](https://img.shields.io/badge/runs-100%25_offline-brightgreen)
 

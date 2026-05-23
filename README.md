@@ -59,6 +59,42 @@ Default language is Turkish (`tr`). Pass a second argument to override:
 python srt_to_lrc.py output/song/vocals.srt output/song/song.lrc
 ```
 
+## Desktop App (Tauri)
+
+A GUI wrapper built with Tauri v2 + React. Select audio files, pick a language, and view results — all from a native desktop window.
+
+### Additional Requirements
+
+- [Rust](https://rustup.rs)
+- [Node.js](https://nodejs.org) + [pnpm](https://pnpm.io)
+
+### Run in Development
+
+```bash
+cd app
+pnpm install
+pnpm tauri dev
+```
+
+### Build
+
+```bash
+cd app
+pnpm tauri build
+```
+
+The `.app` and `.dmg` bundles are output to `app/src-tauri/target/release/bundle/`.
+
+### Features
+
+- Native file picker (mp3, wav, m4a, flac)
+- Language selection (12 languages, default: Turkish)
+- Batch processing — queue multiple files
+- Real-time log output in background
+- Result viewer with LRC, SRT, TXT, VTT, JSON tabs
+- LRC player with synchronized lyrics and seek
+- Song management (list, select, delete)
+
 ## Performance (M4 Pro, 24GB)
 
 | Step | 3-4 min song |
